@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Preço 3D Pro">
+  <title>Calculadora 3D Pro</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #151e32;
+      --input-bg: #0b1120;
+      --border: #24324f;
+      --accent: #38bdf8;
+      --accent-grad: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      --text: #f8fafc;
+      --sub: #94a3b8;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: env(safe-area-inset-top, 24px) 16px calc(env(safe-area-inset-bottom, 24px) + 20px);
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.4;
+    }
+    .header { text-align: center; margin-bottom: 16px; }
+    .header h1 { font-size: 1.35rem; font-weight: 800; margin: 0; }
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--sub);
+      margin-top: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .field { display: flex; flex-direction: column; margin-bottom: 6px; }
+    label { font-size: 0.75rem; color: var(--sub); margin-bottom: 5px; font-weight: 500; }
+    input, select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 32px;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .result-box {
+      border-radius: 16px;
+      padding: 14px;
+      overflow: hidden;
+    }
+    .result-box.unit {
+      background: #18233c;
+      border: 1px solid #2d416b;
+    }
+    .result-box.total {
+      background: var(--accent-grad);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+    }
+    .result-box .tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.85;
+      display: block;
+    }
+    .result-box .price {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin: 4px 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .result-box.total .price { color: #fff; }
+    .result-box.unit .price { color: var(--accent); }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      padding: 3px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-row span:first-child { opacity: 0.8; }
+    .stat-row span:last-child { font-weight: 700; }
+
+    .cost-bar-container {
+      margin-top: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .cost-bar-title {
+      font-size: 0.75rem;
+      color: var(--sub);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .cost-bar {
+      display: flex;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #0b1120;
+    }
+    .bar-mat { background: #38bdf8; }
+    .bar-energy { background: #facc15; }
+    .bar-mach { background: #fb923c; }
+    .bar-fixed { background: #a855f7; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: var(--sub);
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .help-box {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(250, 204, 21, 0.1);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      font-size: 0.74rem;
+      color: #fde047;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Calculadora 3D Pro</h1>
+    <div class="sync-badge" onclick="fetchFilaments()">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncText">Sincronizando com sua planilha...</span>
+    </div>
+  </div>
+
+  <!-- Filamentos da Planilha -->
+  <div class="card">
+    <div class="card-title">
+      <span>Filamento em Estoque</span>
+      <button onclick="fetchFilaments()" style="background:none; border:none; color:var(--accent); font-size:0.75rem; font-weight:600; cursor:pointer;">Atualizar 🔄</button>
+    </div>
+    <div class="field">
+      <label>Escolha o Filamento</label>
+      <select id="filamentSelect" onchange="onFilamentChange()">
+        <option value="">Carregando filamentos...</option>
+      </select>
+    </div>
+
+    <div id="helpNotice" class="help-box">
+      Para sincronizar novas linhas ao vivo da planilha <strong>Custos</strong>, abra a planilha no Google Sheets &rarr; clique em <strong>Compartilhar</strong> &rarr; mude o acesso geral para <strong>"Qualquer pessoa com o link (Leitor)"</strong>.
+    </div>
+
+    <div class="grid" style="margin-top: 8px;">
+      <div class="field">
+        <label>Preço Carretel 1kg (R$)</label>
+        <input type="number" id="spoolPrice" value="90" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Perda / Purga (%)</label>
+        <input type="number" id="wastePct" value="8" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Parâmetros de Impressão -->
+  <div class="card">
+    <div class="card-title">Lote e Tempo</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Qtd Peças</label>
+        <input type="number" id="quantity" value="1" min="1" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Peso/Peça (g)</label>
+        <input type="number" id="weight" value="65" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Tempo/Peça (h)</label>
+        <input type="number" id="timePerPiece" step="0.1" value="2.5" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Custos Indiretos e Margem -->
+  <div class="card">
+    <div class="card-title">Custos Operacionais e Margem</div>
+    <div class="grid">
+      <div class="field">
+        <label>Desgaste Máq. (R$/h)</label>
+        <input type="number" id="deprecPerHour" step="0.5" value="2.50" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Energia (R$/h)</label>
+        <input type="number" id="energyCostPerHour" step="0.05" value="0.15" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Pós/Embalagem (R$/peça)</label>
+        <input type="number" id="laborPerPiece" value="5.00" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Margem Desejada (%)</label>
+        <input type="number" id="markup" value="100" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados Unitário vs Lote -->
+  <div class="results-grid">
+    <div class="result-box unit">
+      <span class="tag">Por Peça</span>
+      <div class="price" id="unitPrice">R$ 0,00</div>
+      <div class="stat-row">
+        <span>Custo:</span>
+        <span id="unitCost">R$ 0,00</span>
+      </div>
+      <div class="stat-row">
+        <span>Lucro:</span>
+        <span id="unitProfit">R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="result-box total">
+      <span class="tag">Pedido Total</span>
+      <div class="price" id="totalPrice">R$ 0,00</div>
+      <div class="stat-row">
+        <span>Custo Total:</span>
+        <span id="totalCost">R$ 0,00</span>
+      </div>
+      <div class="stat-row">
+        <span>Lucro Total:</span>
+        <span id="totalProfit">R$ 0,00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Composição -->
+  <div class="cost-bar-container">
+    <div class="cost-bar-title">
+      <span>Composição do Custo (Total)</span>
+      <span id="totalFilamentWeight">0g</span>
+    </div>
+    <div class="cost-bar">
+      <div id="barMat" class="bar-mat" style="width: 50%"></div>
+      <div id="barEnergy" class="bar-energy" style="width: 15%"></div>
+      <div id="barMach" class="bar-mach" style="width: 20%"></div>
+      <div id="barFixed" class="bar-fixed" style="width: 15%"></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot bar-mat"></div>Material</div>
+      <div class="legend-item"><div class="dot bar-energy"></div>Energia</div>
+      <div class="legend-item"><div class="dot bar-mach"></div>Máquina</div>
+      <div class="legend-item"><div class="dot bar-fixed"></div>Mão de obra</div>
+    </div>
+  </div>
+
+  <script>
+    // ID direto da sua planilha "Custos" já configurado:
+    const SHEET_ID = "1vRwjyGc0vsqWTq3TCizUFUx2xB7L3MvrICZvGeLhH5s";
+    const SHEET_NAME = "Filamentos";
+
+    const fallbackFilaments = [
+      { label: "3DLab - Preto (PLA)", price: 90 },
+      { label: "3DLab - Azul Marinho (PLA)", price: 90 },
+      { label: "3DLab - Vermelho (PLA)", price: 90 },
+      { label: "3DLab - Bege (PLA)", price: 92 },
+      { label: "3DLab - Branco (PLA)", price: 92 },
+      { label: "Triad3D - Cinza (PLA)", price: 85 },
+      { label: "Triad3D - Branca (PETG)", price: 95 }
+    ];
+
+    // Função que recebe os dados ao vivo do Google Sheets via JSONP (sem bloqueio de CORS e sem precisar de Apps Script)
+    window.handleSheetData = function(response) {
+      const syncDot = document.getElementById('syncDot');
+      const syncText = document.getElementById('syncText');
+      const helpNotice = document.getElementById('helpNotice');
+
+      try {
+        const rows = response.table.rows;
+        const items = [];
+
+        rows.forEach(r => {
+          if (!r || !r.c) return;
+          const brand = r.c[0] ? r.c[0].v : "";
+          const color = r.c[1] ? r.c[1].v : "";
+          const type  = r.c[2] ? r.c[2].v : "";
+          const rawPrice = r.c[4] ? (r.c[4].v !== null ? r.c[4].v : r.c[4].f) : 0;
+
+          if (!brand || String(brand).toLowerCase().includes("total") || String(brand).toLowerCase().includes("marca")) return;
+
+          const price = parseFloat(String(rawPrice).replace("R$", "").replace(",", ".").trim()) || 0;
+          items.push({
+            label: `${brand} - ${color} (${type})`,
+            price: price > 0 ? price : 90
+          });
+        });
+
+        if (items.length > 0) {
+          localStorage.setItem('filaments_cache', JSON.stringify(items));
+          renderFilamentOptions(items);
+          syncDot.style.background = '#34d399';
+          syncText.innerText = 'Sincronizado ao vivo com Google Sheets';
+          helpNotice.style.display = 'none';
+        }
+      } catch (err) {
+        console.warn("Erro ao processar planilha:", err);
+      }
+    };
+
+    function fetchFilaments() {
+      const syncDot = document.getElementById('syncDot');
+      const syncText = document.getElementById('syncText');
+      syncDot.style.background = '#facc15';
+      syncText.innerText = 'Buscando dados da planilha...';
+
+      // Carrega o cache imediatamente para não travar a tela
+      const cached = localStorage.getItem('filaments_cache');
+      renderFilamentOptions(cached ? JSON.parse(cached) : fallbackFilaments);
+
+      // Injeta chamada direta para a API de visualização da sua planilha "Custos"
+      const oldScript = document.getElementById('gvizScript');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'gvizScript';
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=responseHandler:handleSheetData&_=${Date.now()}`;
+      script.onerror = function() {
+        syncDot.style.background = '#f97316';
+        syncText.innerText = 'Usando lista salva (Toque para ativar sync)';
+        document.getElementById('helpNotice').style.display = 'block';
+      };
+      document.body.appendChild(script);
+    }
+
+    function renderFilamentOptions(items) {
+      const select = document.getElementById('filamentSelect');
+      const currentVal = select.value;
+      select.innerHTML = '';
+
+      items.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = item.price;
+        opt.dataset.idx = idx;
+        opt.textContent = `${item.label} - R$ ${item.price.toFixed(2)}`;
+        select.appendChild(opt);
+      });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = 'custom';
+      customOpt.textContent = 'Outro / Manual...';
+      select.appendChild(customOpt);
+
+      if (items.length > 0 && !currentVal) {
+        document.getElementById('spoolPrice').value = items[0].price;
+      }
+      calculate();
+    }
+
+    function onFilamentChange() {
+      const select = document.getElementById('filamentSelect');
+      const spoolInput = document.getElementById('spoolPrice');
+      if (select.value !== 'custom') {
+        spoolInput.value = select.value;
+      }
+      calculate();
+    }
+
+    function calculate() {
+      const qty = Math.max(1, parseInt(document.getElementById('quantity').value) || 1);
+      const weight = parseFloat(document.getElementById('weight').value) || 0;
+      const timePerPiece = parseFloat(document.getElementById('timePerPiece').value) || 0;
+      const spoolPrice = parseFloat(document.getElementById('spoolPrice').value) || 0;
+      const wastePct = parseFloat(document.getElementById('wastePct').value) || 0;
+      const deprecPerHour = parseFloat(document.getElementById('deprecPerHour').value) || 0;
+      const energyPerHour = parseFloat(document.getElementById('energyCostPerHour').value) || 0;
+      const laborPerPiece = parseFloat(document.getElementById('laborPerPiece').value) || 0;
+      const markup = parseFloat(document.getElementById('markup').value) || 0;
+
+      const weightWithWaste = weight * (1 + wastePct / 100);
+      const matCostUnit = (spoolPrice / 1000) * weightWithWaste;
+      const energyCostUnit = timePerPiece * energyPerHour;
+      const machCostUnit = timePerPiece * deprecPerHour;
+      const unitCost = matCostUnit + energyCostUnit + machCostUnit + laborPerPiece;
+
+      const unitSalePrice = unitCost * (1 + markup / 100);
+      const unitProfit = unitSalePrice - unitCost;
+
+      const totalCost = unitCost * qty;
+      const totalSalePrice = unitSalePrice * qty;
+      const totalProfit = unitProfit * qty;
+      const totalGrams = weightWithWaste * qty;
+
+      const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      document.getElementById('unitCost').innerText = fmt(unitCost);
+      document.getElementById('unitProfit').innerText = fmt(unitProfit);
+      document.getElementById('unitPrice').innerText = fmt(unitSalePrice);
+
+      document.getElementById('totalCost').innerText = fmt(totalCost);
+      document.getElementById('totalProfit').innerText = fmt(totalProfit);
+      document.getElementById('totalPrice').innerText = fmt(totalSalePrice);
+
+      document.getElementById('totalFilamentWeight').innerText = `${Math.round(totalGrams)}g total`;
+
+      if (unitCost > 0) {
+        document.getElementById('barMat').style.width = `${(matCostUnit / unitCost) * 100}%`;
+        document.getElementById('barEnergy').style.width = `${(energyCostUnit / unitCost) * 100}%`;
+        document.getElementById('barMach').style.width = `${(machCostUnit / unitCost) * 100}%`;
+        document.getElementById('barFixed').style.width = `${(laborPerPiece / unitCost) * 100}%`;
+      }
+    }
+
+    fetchFilaments();
+  </script>
+</body>
+</html>
